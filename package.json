@@ -1,0 +1,41 @@
+{
+  "name": "piece-rate-tracker",
+  "version": "1.0.0",
+  "description": "Manufacturing piece-rate wage tracking system with offline-first scanning",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server -p 8080 -c-1",
+    "build": "echo 'No build step required - static HTML deployment'",
+    "test": "echo 'Tests not yet implemented'",
+    "deploy": "echo 'Deploy to your hosting provider'"
+  },
+  "keywords": [
+    "manufacturing",
+    "piece-rate",
+    "wage-tracking",
+    "offline-first",
+    "pwa",
+    "barcode-scanning"
+  ],
+  "author": "Your Company IT Department",
+  "license": "MIT",
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourcompany/piece-rate-tracker"
+  },
+  "bugs": {
+    "url": "https://github.com/yourcompany/piece-rate-tracker/issues"
+  },
+  "homepage": "https://yourcompany.github.io/piece-rate-tracker"
+}
