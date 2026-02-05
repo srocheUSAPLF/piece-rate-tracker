@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Piece Rate Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Simple Icon Components
+        const Icon = ({ d, size = 24 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                {d.map((path, i) => typeof path === 'string' ? <path key={i} d={path} /> : React.createElement(path.type, { key: i, ...path.props }))}
+            </svg>
+        );
+
+        const Camera = ({ size = 24 }) => <Icon size={size} d={[
+            "M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z",
+            { type: 'circle', props: { cx: "12", cy: "13", r: "4" } }
+        ]} />;
+
+        const DollarSign = ({ size = 24 }) => <Icon size={size} d={[
+            { type: 'line', props: { x1: "12", y1: "1", x2: "12", y2: "23" } },
+            "M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"
+        ]} />;
+
+        const Wifi = ({ size = 24 }) => <Icon size={size} d={[
+            "M5 12.55a11 11 0 0 1 14.08 0",
+            "M1.42 9a16 16 0 0 1 21.16 0",
+            "M8.53 16.11a6 6 0 0 1 6.95 0",
+            { type: 'line', props: { x1: "12", y1: "20", x2: "12.01", y2: "20" } }
+        ]} />;
+
+        const WifiOff = ({ size = 24 }) => <Icon size={size} d={[
+            { type: 'line', props: { x1: "1", y1: "1", x2: "23", y2: "23" } },
+            "M16.72 11.06A10.94 10.94 0 0 1 19 12.55",
+            "M5 12.55a10.94 10.94 0 0 1 5.17-2.39",
+            { type: 'line', props: { x1: "12", y1: "20", x2: "12.01", y2: "20" } }
+        ]} />;
+
+        const CheckCircle = ({ size = 24 }) => <Icon size={size} d={[
+            "M22 11.08V12a10 10 0 1 1-5.93-9.14",
+            { type: 'polyline', props: { points: "22 4 12 14.01 9 11.01" } }
+        ]} />;
+
+        const XCircle = ({ size = 24 }) => <Icon size={size} d={[
+            { type: 'circle', props: { cx: "12", cy: "12", r: "10" } },
+            { type: 'line', props: { x1: "15", y1: "9", x2: "9", y2: "15" } },
+            { type: 'line', props: { x1: "9", y1: "9", x2: "15", y2: "15" } }
+        ]} />;
+
+        const LogOut = ({ size = 24 }) => <Icon size={size} d={[
+            "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4",
+            { type: 'polyline', props: { points: "16 17 21 12 16 7" } },
+            { type: 'line', props: { x1: "21", y1: "12", x2: "9", y2: "12" } }
+        ]} />;
+
+        const Users = ({ size = 24 }) => <Icon size={size} d={[
+            "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2",
+            { type: 'circle', props: { cx: "9", cy: "7", r: "4" } },
+            "M23 21v-2a4 4 0 0 0-3-3.87",
+            "M16 3.13a4 4 0 0 1 0 7.75"
+        ]} />;
+
+        const BarChart3 = ({ size = 24 }) => <Icon size={size} d={["M3 3v18h18", "M18 17V9", "M13 17V5", "M8 17v-3"]} />;
+        const Download = ({ size = 24 }) => <Icon size={size} d={["M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", { type: 'polyline', props: { points: "7 10 12 15 17 10" } }, { type: 'line', props: { x1: "12", y1: "15", x2: "12", y2: "3" } }]} />;
+        const Plus = ({ size = 24 }) => <Icon size={size} d={[{ type: 'line', props: { x1: "12", y1: "5", x2: "12", y2: "19" } }, { type: 'line', props: { x1: "5", y1: "12", x2: "19", y2: "12" } }]} />;
+        const Search = ({ size = 24 }) => <Icon size={size} d={[{ type: 'circle', props: { cx: "11", cy: "11", r: "8" } }, "m21 21-4.35-4.35"]} />;
+        const Clock = ({ size = 24 }) => <Icon size={size} d={[{ type: 'circle', props: { cx: "12", cy: "12", r: "10" } }, { type: 'polyline', props: { points: "12 6 12 12 16 14" } }]} />;
+        const Menu = ({ size = 24 }) => <Icon size={size} d={[{ type: 'line', props: { x1: "3", y1: "12", x2: "21", y2: "12" } }, { type: 'line', props: { x1: "3", y1: "6", x2: "21", y2: "6" } }, { type: 'line', props: { x1: "3", y1: "18", x2: "21", y2: "18" } }]} />;
+        const X = ({ size = 24 }) => <Icon size={size} d={[{ type: 'line', props: { x1: "18", y1: "6", x2: "6", y2: "18" } }, { type: 'line', props: { x1: "6", y1: "6", x2: "18", y2: "18" } }]} />;
+
+        // Main App Component
+        function PieceRateTracker() {
+            const [currentUser, setCurrentUser] = useState(null);
+            const [activeScreen, setActiveScreen] = useState('login');
+            const [isOnline, setIsOnline] = useState(navigator.onLine);
+            const [isSyncing, setIsSyncing] = useState(false);
+            const [syncQueue, setSyncQueue] = useState([]);
+            const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+            const [employees, setEmployees] = useState([]);
+            const [operations, setOperations] = useState([]);
+            const [pieceRates, setPieceRates] = useState([]);
+            const [scanLog, setScanLog] = useState([]);
+            const [loginForm, setLoginForm] = useState({ employeeId: '', pin: '' });
+            const [scanInput, setScanInput] = useState('');
+            const [scanError, setScanError] = useState('');
+            const [scanSuccess, setScanSuccess] = useState('');
+            const [isCameraActive, setIsCameraActive] = useState(false);
+            const [adminView, setAdminView] = useState('employees');
+            const [searchTerm, setSearchTerm] = useState('');
+
+            useEffect(() => {
+                const savedQueue = localStorage.getItem('scanSyncQueue');
+                if (savedQueue) setSyncQueue(JSON.parse(savedQueue));
+                loadMockData();
+                
+                const handleOnline = () => { setIsOnline(true); syncOfflineScans(); };
+                const handleOffline = () => setIsOnline(false);
+                window.addEventListener('online', handleOnline);
+                window.addEventListener('offline', handleOffline);
+                return () => {
+                    window.removeEventListener('online', handleOnline);
+                    window.removeEventListener('offline', handleOffline);
+                };
+            }, []);
+
+            useEffect(() => {
+                localStorage.setItem('scanSyncQueue', JSON.stringify(syncQueue));
+            }, [syncQueue]);
+
+            const loadMockData = () => {
+                setEmployees([
+                    { employee_id: 'EMP001', name: 'John Smith', pin: '1234', role: 'admin', active: true },
+                    { employee_id: 'EMP002', name: 'Maria Garcia', pin: '5678', role: 'employee', active: true },
+                    { employee_id: 'EMP003', name: 'David Chen', pin: '9012', role: 'employee', active: true },
+                ]);
+                setOperations([
+                    { operation: 'CUT', operation_name: 'Cutting', sort_order: 1 },
+                    { operation: 'WELD', operation_name: 'Welding', sort_order: 2 },
+                    { operation: 'PAINT', operation_name: 'Painting', sort_order: 3 },
+                ]);
+                setPieceRates([
+                    { sku: 'WIDGET-A', operation: 'CUT', rate: 2.50, active: true, effective_start: '2024-01-01', effective_end: '2099-12-31' },
+                    { sku: 'WIDGET-A', operation: 'WELD', rate: 3.75, active: true, effective_start: '2024-01-01', effective_end: '2099-12-31' },
+                    { sku: 'WIDGET-A', operation: 'PAINT', rate: 2.00, active: true, effective_start: '2024-01-01', effective_end: '2099-12-31' },
+                    { sku: 'WIDGET-B', operation: 'CUT', rate: 3.00, active: true, effective_start: '2024-01-01', effective_end: '2099-12-31' },
+                    { sku: 'BRACKET-X', operation: 'WELD', rate: 2.25, active: true, effective_start: '2024-01-01', effective_end: '2099-12-31' },
+                ]);
+                const mockScans = [];
+                const today = new Date();
+                for (let i = 0; i < 20; i++) {
+                    const daysAgo = Math.floor(Math.random() * 14);
+                    const scanDate = new Date(today);
+                    scanDate.setDate(scanDate.getDate() - daysAgo);
+                    mockScans.push({
+                        scan_id: 'SCAN' + String(i + 1).padStart(6, '0'),
+                        timestamp_utc: scanDate.toISOString(),
+                        employee_id: i % 2 === 0 ? 'EMP002' : 'EMP003',
+                        mo: 'MO' + (10000 + i),
+                        sku: 'WIDGET-A',
+                        unit: String(i + 1).padStart(3, '0'),
+                        operation: ['CUT', 'WELD', 'PAINT'][i % 3],
+                        rate: [2.50, 3.75, 2.00][i % 3],
+                        earnings: [2.50, 3.75, 2.00][i % 3],
+                        barcode_raw: 'MO' + (10000 + i) + '|WIDGET-A|' + String(i + 1).padStart(3, '0') + '|' + ['CUT', 'WELD', 'PAINT'][i % 3],
+                        device_id: 'WEB_APP'
+                    });
+                }
+                setScanLog(mockScans);
+            };
+
+            const syncOfflineScans = async () => {
+                if (syncQueue.length === 0) return;
+                setIsSyncing(true);
+                const failedScans = [];
+                for (const queuedScan of syncQueue) {
+                    const isDuplicate = scanLog.some(
+                        s => s.mo === queuedScan.mo && s.unit === queuedScan.unit && s.operation === queuedScan.operation
+                    );
+                    if (!isDuplicate) {
+                        setScanLog(prev => [...prev, queuedScan]);
+                    } else {
+                        failedScans.push({ ...queuedScan, error: 'Duplicate' });
+                    }
+                }
+                setSyncQueue(failedScans);
+                setIsSyncing(false);
+            };
+
+            const parseBarcode = (barcode) => {
+                const parts = barcode.trim().split('|');
+                if (parts.length !== 4) throw new Error('Invalid format. Expected: MO|SKU|UNIT|OPERATION');
+                return { mo: parts[0], sku: parts[1], unit: parts[2], operation: parts[3] };
+            };
+
+            const findPieceRate = (sku, operation) => {
+                return pieceRates.find(r => r.sku === sku && r.operation === operation && r.active);
+            };
+
+            const checkDuplicate = (mo, unit, operation) => {
+                return scanLog.some(s => s.mo === mo && s.unit === unit && s.operation === operation) ||
+                       syncQueue.some(s => s.mo === mo && s.unit === unit && s.operation === operation);
+            };
+
+            const processScan = () => {
+                setScanError('');
+                setScanSuccess('');
+                try {
+                    const parsed = parseBarcode(scanInput);
+                    const rate = findPieceRate(parsed.sku, parsed.operation);
+                    if (!rate) {
+                        setScanError(`No active piece rate found for ${parsed.sku} - ${parsed.operation}`);
+                        return;
+                    }
+                    if (checkDuplicate(parsed.mo, parsed.unit, parsed.operation)) {
+                        setScanError(`Duplicate: MO ${parsed.mo}, Unit ${parsed.unit}, Operation ${parsed.operation} already scanned`);
+                        return;
+                    }
+                    const scanRecord = {
+                        scan_id: 'SCAN' + Date.now(),
+                        timestamp_utc: new Date().toISOString(),
+                        employee_id: currentUser.employee_id,
+                        mo: parsed.mo,
+                        sku: parsed.sku,
+                        unit: parsed.unit,
+                        operation: parsed.operation,
+                        rate: rate.rate,
+                        earnings: rate.rate,
+                        barcode_raw: scanInput,
+                        device_id: 'WEB_APP'
+                    };
+                    if (isOnline) {
+                        setScanLog(prev => [...prev, scanRecord]);
+                        setScanSuccess(`✓ Scan recorded! Earned $${rate.rate.toFixed(2)}`);
+                    } else {
+                        setSyncQueue(prev => [...prev, scanRecord]);
+                        setScanSuccess(`✓ Queued (offline). Earned $${rate.rate.toFixed(2)}. Will sync when online.`);
+                    }
+                    setScanInput('');
+                } catch (error) {
+                    setScanError(error.message);
+                }
+            };
+
+            const getPayWeekBounds = (date) => {
+                const d = new Date(date);
+                const day = d.getDay();
+                const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+                const monday = new Date(d.setDate(diff));
+                monday.setHours(0, 0, 0, 0);
+                const friday = new Date(monday);
+                friday.setDate(friday.getDate() + 4);
+                friday.setHours(23, 59, 59, 999);
+                return { start: monday, end: friday };
+            };
+
+            const getCurrentPayWeek = () => getPayWeekBounds(new Date());
+
+            const getWeeklyEarnings = (employeeId) => {
+                const { start, end } = getCurrentPayWeek();
+                const userScans = scanLog.filter(s => {
+                    const scanDate = new Date(s.timestamp_utc);
+                    return s.employee_id === employeeId && scanDate >= start && scanDate <= end;
+                });
+                const byOperation = {};
+                userScans.forEach(scan => {
+                    const key = scan.sku + '|' + scan.operation;
+                    if (!byOperation[key]) {
+                        byOperation[key] = { sku: scan.sku, operation: scan.operation, count: 0, earnings: 0 };
+                    }
+                    byOperation[key].count++;
+                    byOperation[key].earnings += scan.earnings;
+                });
+                return Object.values(byOperation);
+            };
+
+            const getLast4WeeksHistory = (employeeId) => {
+                const weeks = [];
+                for (let i = 0; i < 4; i++) {
+                    const date = new Date();
+                    date.setDate(date.getDate() - (i * 7));
+                    const { start, end } = getPayWeekBounds(date);
+                    const weekScans = scanLog.filter(s => {
+                        const scanDate = new Date(s.timestamp_utc);
+                        return s.employee_id === employeeId && scanDate >= start && scanDate <= end;
+                    });
+                    const total = weekScans.reduce((sum, s) => sum + s.earnings, 0);
+                    weeks.push({ weekStart: start, weekEnd: end, scans: weekScans.length, earnings: total });
+                }
+                return weeks;
+            };
+
+            const handleLogin = () => {
+                const employee = employees.find(e => e.employee_id === loginForm.employeeId && e.pin === loginForm.pin && e.active);
+                if (employee) {
+                    setCurrentUser(employee);
+                    setActiveScreen(employee.role === 'admin' ? 'admin' : 'scan');
+                    setLoginForm({ employeeId: '', pin: '' });
+                } else {
+                    alert('Invalid credentials or inactive account');
+                }
+            };
+
+            const handleLogout = () => {
+                setCurrentUser(null);
+                setActiveScreen('login');
+                setMobileMenuOpen(false);
+            };
+
+            const exportPayroll = () => {
+                const { start, end } = getCurrentPayWeek();
+                const grouped = {};
+                scanLog.forEach(scan => {
+                    const scanDate = new Date(scan.timestamp_utc);
+                    if (scanDate >= start && scanDate <= end) {
+                        const key = scan.employee_id + '|' + scan.sku + '|' + scan.operation + '|' + scan.rate;
+                        if (!grouped[key]) {
+                            const employee = employees.find(e => e.employee_id === scan.employee_id);
+                            grouped[key] = {
+                                employee_id: scan.employee_id,
+                                employee_name: employee?.name || 'Unknown',
+                                week_start: start.toISOString().split('T')[0],
+                                week_end: end.toISOString().split('T')[0],
+                                sku: scan.sku,
+                                operation: scan.operation,
+                                qty_scans: 0,
+                                rate: scan.rate,
+                                total_earnings: 0
+                            };
+                        }
+                        grouped[key].qty_scans++;
+                        grouped[key].total_earnings += scan.earnings;
+                    }
+                });
+                const rows = Object.values(grouped);
+                const csv = [
+                    ['employee_id', 'employee_name', 'week_start', 'week_end', 'sku', 'operation', 'qty_scans', 'rate', 'total_earnings'],
+                    ...rows.map(r => [r.employee_id, r.employee_name, r.week_start, r.week_end, r.sku, r.operation, r.qty_scans, r.rate.toFixed(2), r.total_earnings.toFixed(2)])
+                ].map(row => row.join(',')).join('\n');
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'payroll_' + start.toISOString().split('T')[0] + '_to_' + end.toISOString().split('T')[0] + '.csv';
+                a.click();
+            };
+
+            const ConnectionStatus = () => (
+                <div className={'connection-status ' + (isOnline ? 'online' : 'offline')}>
+                    {isOnline ? <Wifi size={16} /> : <WifiOff size={16} />}
+                    <span>{isOnline ? 'Online' : 'Offline'}</span>
+                    {syncQueue.length > 0 && <span className="sync-badge">{syncQueue.length} queued</span>}
+                    {isSyncing && <Clock size={16} className="spinning" />}
+                </div>
+            );
+
+            const LoginScreen = () => (
+                <div className="login-container">
+                    <div className="login-card">
+                        <div className="login-header">
+                            <DollarSign size={48} />
+                            <h1>Piece Rate Tracker</h1>
+                            <p>Manufacturing Wage Management</p>
+                        </div>
+                        <div className="login-form">
+                            <input
+                                type="text"
+                                placeholder="Employee ID"
+                                value={loginForm.employeeId}
+                                onChange={(e) => setLoginForm({ ...loginForm, employeeId: e.target.value })}
+                                onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+                            />
+                            <input
+                                type="password"
+                                placeholder="PIN"
+                                value={loginForm.pin}
+                                onChange={(e) => setLoginForm({ ...loginForm, pin: e.target.value })}
+                                onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+                            />
+                            <button onClick={handleLogin} className="btn-primary">Login</button>
+                        </div>
+                        <ConnectionStatus />
+                    </div>
+                </div>
+            );
+
+            const ScanScreen = () => {
+                const weeklyEarnings = getWeeklyEarnings(currentUser.employee_id);
+                const totalWeekly = weeklyEarnings.reduce((sum, item) => sum + item.earnings, 0);
+                return (
+                    <div className="scan-screen">
+                        <div className="scan-header">
+                            <h2>Scan Barcode</h2>
+                            <div className="weekly-total">
+                                <span>This Week:</span>
+                                <strong>${totalWeekly.toFixed(2)}</strong>
+                            </div>
+                        </div>
+                        {isCameraActive ? (
+                            <div className="camera-view">
+                                <div className="camera-placeholder">
+                                    <Camera size={64} />
+                                    <p>Camera scanning would be active here</p>
+                                    <p className="camera-note">In production: Use camera API + barcode scanner</p>
+                                    <button onClick={() => setIsCameraActive(false)} className="btn-secondary">Close Camera</button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="scan-input-section">
+                                <button onClick={() => setIsCameraActive(true)} className="btn-camera">
+                                    <Camera size={24} /><span>Scan with Camera</span>
+                                </button>
+                                <div className="or-divider">OR</div>
+                                <div className="manual-entry">
+                                    <label>Manual Entry</label>
+                                    <input
+                                        type="text"
+                                        placeholder="MO|SKU|UNIT|OPERATION"
+                                        value={scanInput}
+                                        onChange={(e) => setScanInput(e.target.value)}
+                                        onKeyPress={(e) => e.key === 'Enter' && processScan()}
+                                    />
+                                    <button onClick={processScan} className="btn-primary">Submit Scan</button>
+                                    <p className="hint">Format: 12345|WIDGET-A|001|PAINT</p>
+                                </div>
+                            </div>
+                        )}
+                        {scanError && (
+                            <div className="scan-message error">
+                                <XCircle size={20} /><span>{scanError}</span>
+                            </div>
+                        )}
+                        {scanSuccess && (
+                            <div className="scan-message success">
+                                <CheckCircle size={20} /><span>{scanSuccess}</span>
+                            </div>
+                        )}
+                        {weeklyEarnings.length > 0 && (
+                            <div className="earnings-preview">
+                                <h3>This Week's Operations</h3>
+                                <div className="earnings-list">
+                                    {weeklyEarnings.map((item, idx) => (
+                                        <div key={idx} className="earnings-item">
+                                            <div><strong>{item.sku}</strong><span>{item.operation}</span></div>
+                                            <div><span>{item.count} units</span><strong>${item.earnings.toFixed(2)}</strong></div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
+            };
+
+            const EarningsScreen = () => {
+                const weeklyEarnings = getWeeklyEarnings(currentUser.employee_id);
+                const totalWeekly = weeklyEarnings.reduce((sum, item) => sum + item.earnings, 0);
+                const { start, end } = getCurrentPayWeek();
+                return (
+                    <div className="earnings-screen">
+                        <h2>My Earnings</h2>
+                        <div className="pay-week-info">
+                            <p>Pay Week: {start.toLocaleDateString()} - {end.toLocaleDateString()}</p>
+                        </div>
+                        <div className="total-card">
+                            <span>Total Weekly Earnings</span>
+                            <h1>${totalWeekly.toFixed(2)}</h1>
+                        </div>
+                        <div className="earnings-breakdown">
+                            <h3>Breakdown by Operation</h3>
+                            {weeklyEarnings.length === 0 ? (
+                                <p className="empty-state">No scans recorded this week</p>
+                            ) : (
+                                <div className="breakdown-grid">
+                                    {weeklyEarnings.map((item, idx) => (
+                                        <div key={idx} className="breakdown-card">
+                                            <div className="breakdown-header">
+                                                <strong>{item.sku}</strong>
+                                                <span className="operation-badge">{item.operation}</span>
+                                            </div>
+                                            <div className="breakdown-stats">
+                                                <div><span>Units</span><strong>{item.count}</strong></div>
+                                                <div><span>Earnings</span><strong>${item.earnings.toFixed(2)}</strong></div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                );
+            };
+
+            const HistoryScreen = () => {
+                const history = getLast4WeeksHistory(currentUser.employee_id);
+                return (
+                    <div className="history-screen">
+                        <h2>Last 4 Weeks</h2>
+                        <div className="history-list">
+                            {history.map((week, idx) => (
+                                <div key={idx} className="history-card">
+                                    <div className="history-header">
+                                        <span className="week-label">Week {idx === 0 ? '(Current)' : idx}</span>
+                                        <span className="week-dates">{week.weekStart.toLocaleDateString()} - {week.weekEnd.toLocaleDateString()}</span>
+                                    </div>
+                                    <div className="history-stats">
+                                        <div><span>Scans</span><strong>{week.scans}</strong></div>
+                                        <div><span>Earnings</span><strong>${week.earnings.toFixed(2)}</strong></div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+            };
+
+            const AdminDashboard = () => {
+                const renderEmployees = () => (
+                    <div className="admin-section">
+                        <div className="section-header">
+                            <h3>Employees</h3>
+                            <button className="btn-icon"><Plus size={20} /></button>
+                        </div>
+                        <div className="data-table">
+                            {employees.map(emp => (
+                                <div key={emp.employee_id} className={'data-row ' + (!emp.active ? 'inactive' : '')}>
+                                    <div className="data-main">
+                                        <strong>{emp.name}</strong>
+                                        <span>{emp.employee_id}</span>
+                                    </div>
+                                    <div className="data-meta">
+                                        <span className={'role-badge ' + emp.role}>{emp.role}</span>
+                                        <span className={'status-badge ' + (emp.active ? 'active' : 'inactive')}>
+                                            {emp.active ? 'Active' : 'Inactive'}
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+
+                const renderPieceRates = () => (
+                    <div className="admin-section">
+                        <div className="section-header">
+                            <h3>Piece Rates</h3>
+                            <button className="btn-icon"><Plus size={20} /></button>
+                        </div>
+                        <div className="data-table">
+                            {pieceRates.filter(r => r.active).map((rate, idx) => (
+                                <div key={idx} className="data-row">
+                                    <div className="data-main">
+                                        <strong>{rate.sku}</strong>
+                                        <span>{rate.operation}</span>
+                                    </div>
+                                    <div className="data-meta">
+                                        <span className="rate-amount">${rate.rate.toFixed(2)}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+
+                const renderScanLog = () => {
+                    const filteredScans = scanLog.filter(scan => 
+                        scan.employee_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        scan.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        scan.mo.toLowerCase().includes(searchTerm.toLowerCase())
+                    ).slice(0, 50);
+                    return (
+                        <div className="admin-section">
+                            <div className="section-header">
+                                <h3>Scan Log</h3>
+                                <div className="search-box">
+                                    <Search size={16} />
+                                    <input type="text" placeholder="Search scans..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                                </div>
+                            </div>
+                            <div className="data-table">
+                                {filteredScans.map(scan => {
+                                    const emp = employees.find(e => e.employee_id === scan.employee_id);
+                                    return (
+                                        <div key={scan.scan_id} className="data-row scan-row">
+                                            <div className="scan-info">
+                                                <div className="scan-primary">
+                                                    <strong>{emp?.name || scan.employee_id}</strong>
+                                                    <span className="scan-time">{new Date(scan.timestamp_utc).toLocaleString()}</span>
+                                                </div>
+                                                <div className="scan-details">
+                                                    <span>MO: {scan.mo}</span><span>•</span>
+                                                    <span>{scan.sku}</span><span>•</span>
+                                                    <span>Unit {scan.unit}</span><span>•</span>
+                                                    <span>{scan.operation}</span>
+                                                </div>
+                                            </div>
+                                            <div className="scan-earnings">${scan.earnings.toFixed(2)}</div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    );
+                };
+
+                const renderPayroll = () => (
+                    <div className="admin-section">
+                        <div className="section-header">
+                            <h3>Payroll Export</h3>
+                            <button className="btn-primary" onClick={exportPayroll}>
+                                <Download size={20} /><span>Export CSV</span>
+                            </button>
+                        </div>
+                        <div className="payroll-info">
+                            <p>Export current pay week ({getCurrentPayWeek().start.toLocaleDateString()} - {getCurrentPayWeek().end.toLocaleDateString()})</p>
+                            <p>Format: CSV with employee, SKU, operation, quantities, rates, and totals</p>
+                        </div>
+                    </div>
+                );
+
+                return (
+                    <div className="admin-dashboard">
+                        <div className="admin-nav">
+                            <button className={adminView === 'employees' ? 'active' : ''} onClick={() => setAdminView('employees')}>
+                                <Users size={20} /><span>Employees</span>
+                            </button>
+                            <button className={adminView === 'rates' ? 'active' : ''} onClick={() => setAdminView('rates')}>
+                                <DollarSign size={20} /><span>Piece Rates</span>
+                            </button>
+                            <button className={adminView === 'scans' ? 'active' : ''} onClick={() => setAdminView('scans')}>
+                                <BarChart3 size={20} /><span>Scan Log</span>
+                            </button>
+                            <button className={adminView === 'payroll' ? 'active' : ''} onClick={() => setAdminView('payroll')}>
+                                <Download size={20} /><span>Payroll</span>
+                            </button>
+                        </div>
+                        <div className="admin-content">
+                            {adminView === 'employees' && renderEmployees()}
+                            {adminView === 'rates' && renderPieceRates()}
+                            {adminView === 'scans' && renderScanLog()}
+                            {adminView === 'payroll' && renderPayroll()}
+                        </div>
+                    </div>
+                );
+            };
+
+            const Navigation = () => {
+                if (!currentUser) return null;
+                const isAdmin = currentUser.role === 'admin';
+                return (
+                    <>
+                        <nav className="main-nav">
+                            <div className="nav-brand">
+                                <DollarSign size={24} />
+                                <span>Piece Rate Tracker</span>
+                            </div>
+                            <div className="nav-links desktop-only">
+                                {isAdmin ? (
+                                    <button className={activeScreen === 'admin' ? 'active' : ''} onClick={() => setActiveScreen('admin')}>Admin Dashboard</button>
+                                ) : (
+                                    <>
+                                        <button className={activeScreen === 'scan' ? 'active' : ''} onClick={() => setActiveScreen('scan')}>Scan</button>
+                                        <button className={activeScreen === 'earnings' ? 'active' : ''} onClick={() => setActiveScreen('earnings')}>My Earnings</button>
+                                        <button className={activeScreen === 'history' ? 'active' : ''} onClick={() => setActiveScreen('history')}>History</button>
+                                    </>
+                                )}
+                            </div>
+                            <div className="nav-actions">
+                                <ConnectionStatus />
+                                <button className="btn-icon desktop-only" onClick={handleLogout}><LogOut size={20} /></button>
+                                <button className="btn-icon mobile-only" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+                                    {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                                </button>
+                            </div>
+                        </nav>
+                        {mobileMenuOpen && (
+                            <div className="mobile-menu">
+                                {isAdmin ? (
+                                    <button onClick={() => { setActiveScreen('admin'); setMobileMenuOpen(false); }}>Admin Dashboard</button>
+                                ) : (
+                                    <>
+                                        <button onClick={() => { setActiveScreen('scan'); setMobileMenuOpen(false); }}>Scan</button>
+                                        <button onClick={() => { setActiveScreen('earnings'); setMobileMenuOpen(false); }}>My Earnings</button>
+                                        <button onClick={() => { setActiveScreen('history'); setMobileMenuOpen(false); }}>History</button>
+                                    </>
+                                )}
+                                <button onClick={handleLogout} className="logout-btn"><LogOut size={20} /><span>Logout</span></button>
+                            </div>
+                        )}
+                    </>
+                );
+            };
+
+            return (
+                <div className="app">
+                    <Navigation />
+                    <main className="main-content">
+                        {!currentUser && <LoginScreen />}
+                        {currentUser && activeScreen === 'scan' && <ScanScreen />}
+                        {currentUser && activeScreen === 'earnings' && <EarningsScreen />}
+                        {currentUser && activeScreen === 'history' && <HistoryScreen />}
+                        {currentUser && activeScreen === 'admin' && <AdminDashboard />}
+                    </main>
+                    <style>{`
+                        .app{min-height:100vh;display:flex;flex-direction:column}
+                        .main-nav{background:rgba(26,26,46,.95);backdrop-filter:blur(10px);border-bottom:1px solid rgba(228,228,231,.1);padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+                        .nav-brand{display:flex;align-items:center;gap:.75rem;font-weight:700;font-size:1.1rem;color:#fbbf24}
+                        .nav-links{display:flex;gap:.5rem}
+                        .nav-links button{background:none;border:none;color:#a1a1aa;padding:.625rem 1.25rem;border-radius:8px;cursor:pointer;font-size:.95rem;font-weight:500;transition:all .2s}
+                        .nav-links button:hover{background:rgba(251,191,36,.1);color:#fbbf24}
+                        .nav-links button.active{background:rgba(251,191,36,.15);color:#fbbf24;font-weight:600}
+                        .nav-actions{display:flex;align-items:center;gap:1rem}
+                        .connection-status{display:flex;align-items:center;gap:.5rem;padding:.5rem 1rem;border-radius:20px;font-size:.875rem;font-weight:600}
+                        .connection-status.online{background:rgba(34,197,94,.15);color:#22c55e}
+                        .connection-status.offline{background:rgba(239,68,68,.15);color:#ef4444}
+                        .sync-badge{background:#fbbf24;color:#1a1a2e;padding:.125rem .5rem;border-radius:10px;font-size:.75rem;font-weight:700}
+                        .btn-icon{background:none;border:none;color:#a1a1aa;cursor:pointer;padding:.5rem;border-radius:8px;transition:all .2s;display:flex;align-items:center;justify-content:center}
+                        .btn-icon:hover{background:rgba(251,191,36,.1);color:#fbbf24}
+                        .mobile-menu{background:rgba(26,26,46,.98);border-bottom:1px solid rgba(228,228,231,.1);padding:1rem;display:flex;flex-direction:column;gap:.5rem}
+                        .mobile-menu button{background:none;border:none;color:#e4e4e7;padding:.875rem;border-radius:8px;cursor:pointer;font-size:1rem;text-align:left;transition:all .2s;display:flex;align-items:center;gap:.75rem}
+                        .mobile-menu button:hover{background:rgba(251,191,36,.1);color:#fbbf24}
+                        .mobile-menu .logout-btn{margin-top:.5rem;border-top:1px solid rgba(228,228,231,.1);padding-top:1rem;color:#ef4444}
+                        .main-content{flex:1;padding:2rem 1.5rem;max-width:1400px;width:100%;margin:0 auto}
+                        .login-container{display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 100px)}
+                        .login-card{background:rgba(26,26,46,.8);backdrop-filter:blur(20px);border:1px solid rgba(251,191,36,.2);border-radius:24px;padding:3rem;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+                        .login-header{text-align:center;margin-bottom:2.5rem}
+                        .login-header svg{color:#fbbf24;margin-bottom:1rem}
+                        .login-header h1{font-size:2rem;font-weight:800;margin-bottom:.5rem;background:linear-gradient(135deg,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+                        .login-header p{color:#a1a1aa;font-size:.95rem}
+                        .login-form{display:flex;flex-direction:column;gap:1rem}
+                        .login-form input{background:rgba(228,228,231,.05);border:1px solid rgba(228,228,231,.1);border-radius:12px;padding:1rem;color:#e4e4e7;font-size:1rem;transition:all .2s}
+                        .login-form input:focus{outline:none;border-color:#fbbf24;background:rgba(228,228,231,.08)}
+                        .btn-primary{background:linear-gradient(135deg,#fbbf24,#f59e0b);border:none;border-radius:12px;padding:1rem;color:#1a1a2e;font-size:1rem;font-weight:700;cursor:pointer;transition:all .3s;display:flex;align-items:center;justify-content:center;gap:.5rem}
+                        .btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(251,191,36,.3)}
+                        .btn-secondary{background:rgba(228,228,231,.1);border:1px solid rgba(228,228,231,.2);border-radius:12px;padding:1rem;color:#e4e4e7;font-size:1rem;font-weight:600;cursor:pointer;transition:all .2s}
+                        .btn-secondary:hover{background:rgba(228,228,231,.15)}
+                        .scan-screen{max-width:800px;margin:0 auto}
+                        .scan-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem}
+                        .scan-header h2{font-size:2rem;font-weight:800}
+                        .weekly-total{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);border-radius:12px;padding:.75rem 1.25rem;display:flex;flex-direction:column;align-items:flex-end}
+                        .weekly-total span{font-size:.875rem;color:#a1a1aa}
+                        .weekly-total strong{font-size:1.75rem;color:#fbbf24;font-weight:800}
+                        .btn-camera{width:100%;background:linear-gradient(135deg,#fbbf24,#f59e0b);border:none;border-radius:16px;padding:2rem;color:#1a1a2e;font-size:1.25rem;font-weight:700;cursor:pointer;transition:all .3s;display:flex;align-items:center;justify-content:center;gap:1rem;margin-bottom:1.5rem}
+                        .btn-camera:hover{transform:translateY(-4px);box-shadow:0 15px 40px rgba(251,191,36,.4)}
+                        .camera-view{background:rgba(26,26,46,.6);border:2px dashed rgba(251,191,36,.3);border-radius:16px;padding:3rem;margin-bottom:1.5rem}
+                        .camera-placeholder{text-align:center;color:#a1a1aa}
+                        .camera-placeholder svg{margin-bottom:1rem;color:#fbbf24}
+                        .camera-note{font-size:.875rem;margin:1rem 0;padding:.75rem;background:rgba(59,130,246,.1);border-radius:8px;color:#60a5fa}
+                        .or-divider{text-align:center;color:#a1a1aa;margin:1.5rem 0;position:relative}
+                        .or-divider::before,.or-divider::after{content:'';position:absolute;top:50%;width:40%;height:1px;background:rgba(228,228,231,.2)}
+                        .or-divider::before{left:0}
+                        .or-divider::after{right:0}
+                        .manual-entry{background:rgba(26,26,46,.6);border:1px solid rgba(228,228,231,.1);border-radius:16px;padding:2rem}
+                        .manual-entry label{display:block;font-weight:600;margin-bottom:.75rem;color:#fbbf24}
+                        .manual-entry input{width:100%;background:rgba(228,228,231,.05);border:1px solid rgba(228,228,231,.1);border-radius:12px;padding:1rem;color:#e4e4e7;font-size:1rem;font-family:'Courier New',monospace;margin-bottom:1rem}
+                        .manual-entry input:focus{outline:none;border-color:#fbbf24;background:rgba(228,228,231,.08)}
+                        .hint{font-size:.875rem;color:#a1a1aa;margin-top:.5rem;font-family:'Courier New',monospace}
+                        .scan-message{display:flex;align-items:center;gap:.75rem;padding:1rem 1.5rem;border-radius:12px;margin-top:1.5rem;font-weight:600}
+                        .scan-message.success{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:#22c55e}
+                        .scan-message.error{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#ef4444}
+                        .earnings-preview{margin-top:2rem;background:rgba(26,26,46,.6);border:1px solid rgba(228,228,231,.1);border-radius:16px;padding:1.5rem}
+                        .earnings-preview h3{font-size:1.25rem;margin-bottom:1rem;color:#fbbf24}
+                        .earnings-list{display:flex;flex-direction:column;gap:.75rem}
+                        .earnings-item{display:flex;justify-content:space-between;align-items:center;padding:1rem;background:rgba(228,228,231,.05);border-radius:10px}
+                        .earnings-item>div{display:flex;flex-direction:column;gap:.25rem}
+                        .earnings-item>div:last-child{align-items:flex-end}
+                        .earnings-item strong{font-weight:700}
+                        .earnings-item span{font-size:.875rem;color:#a1a1aa}
+                        .earnings-screen h2{font-size:2rem;font-weight:800;margin-bottom:1rem}
+                        .pay-week-info{color:#a1a1aa;margin-bottom:2rem}
+                        .total-card{background:linear-gradient(135deg,rgba(251,191,36,.15),rgba(245,158,11,.15));border:1px solid rgba(251,191,36,.3);border-radius:20px;padding:2.5rem;text-align:center;margin-bottom:2.5rem}
+                        .total-card span{font-size:1rem;color:#a1a1aa;display:block;margin-bottom:.5rem}
+                        .total-card h1{font-size:4rem;font-weight:900;color:#fbbf24}
+                        .earnings-breakdown h3{font-size:1.5rem;margin-bottom:1.5rem}
+                        .breakdown-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.25rem}
+                        .breakdown-card{background:rgba(26,26,46,.6);border:1px solid rgba(228,228,231,.1);border-radius:16px;padding:1.5rem;transition:all .2s}
+                        .breakdown-card:hover{border-color:rgba(251,191,36,.3);transform:translateY(-2px)}
+                        .breakdown-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+                        .breakdown-header strong{font-size:1.125rem}
+                        .operation-badge{background:rgba(251,191,36,.15);color:#fbbf24;padding:.375rem .75rem;border-radius:8px;font-size:.75rem;font-weight:700}
+                        .breakdown-stats{display:flex;gap:2rem}
+                        .breakdown-stats>div{display:flex;flex-direction:column;gap:.25rem}
+                        .breakdown-stats span{font-size:.875rem;color:#a1a1aa}
+                        .breakdown-stats strong{font-size:1.5rem;font-weight:800}
+                        .empty-state{text-align:center;color:#a1a1aa;padding:3rem;font-style:italic}
+                        .history-screen h2{font-size:2rem;font-weight:800;margin-bottom:2rem}
+                        .history-list{display:flex;flex-direction:column;gap:1rem}
+                        .history-card{background:rgba(26,26,46,.6);border:1px solid rgba(228,228,231,.1);border-radius:16px;padding:1.5rem;transition:all .2s}
+                        .history-card:hover{border-color:rgba(251,191,36,.3)}
+                        .history-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+                        .week-label{font-weight:700;color:#fbbf24}
+                        .week-dates{font-size:.875rem;color:#a1a1aa}
+                        .history-stats{display:flex;gap:3rem}
+                        .history-stats>div{display:flex;flex-direction:column;gap:.25rem}
+                        .history-stats span{font-size:.875rem;color:#a1a1aa}
+                        .history-stats strong{font-size:1.75rem;font-weight:800}
+                        .admin-dashboard{max-width:1200px;margin:0 auto}
+                        .admin-nav{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:2rem}
+                        .admin-nav button{background:rgba(26,26,46,.6);border:1px solid rgba(228,228,231,.1);border-radius:12px;padding:1.25rem;color:#e4e4e7;cursor:pointer;font-size:1rem;font-weight:600;transition:all .2s;display:flex;align-items:center;gap:.75rem}
+                        .admin-nav button:hover{border-color:rgba(251,191,36,.3);background:rgba(26,26,46,.8)}
+                        .admin-nav button.active{background:rgba(251,191,36,.15);border-color:rgba(251,191,36,.5);color:#fbbf24}
+                        .admin-section{background:rgba(26,26,46,.6);border:1px solid rgba(228,228,231,.1);border-radius:16px;padding:1.5rem}
+                        .section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem}
+                        .section-header h3{font-size:1.5rem;font-weight:700}
+                        .search-box{display:flex;align-items:center;gap:.5rem;background:rgba(228,228,231,.05);border:1px solid rgba(228,228,231,.1);border-radius:10px;padding:.5rem 1rem}
+                        .search-box input{background:none;border:none;color:#e4e4e7;font-size:.95rem;width:250px}
+                        .search-box input:focus{outline:none}
+                        .data-table{display:flex;flex-direction:column;gap:.75rem}
+                        .data-row{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.25rem;background:rgba(228,228,231,.05);border:1px solid rgba(228,228,231,.1);border-radius:10px;transition:all .2s}
+                        .data-row:hover{background:rgba(228,228,231,.08);border-color:rgba(251,191,36,.2)}
+                        .data-row.inactive{opacity:.5}
+                        .data-main{display:flex;flex-direction:column;gap:.25rem}
+                        .data-main strong{font-weight:700}
+                        .data-main span{font-size:.875rem;color:#a1a1aa}
+                        .data-meta{display:flex;align-items:center;gap:.75rem}
+                        .role-badge,.status-badge{padding:.375rem .75rem;border-radius:8px;font-size:.75rem;font-weight:700;text-transform:uppercase}
+                        .role-badge.admin{background:rgba(139,92,246,.15);color:#a78bfa}
+                        .role-badge.employee{background:rgba(59,130,246,.15);color:#60a5fa}
+                        .status-badge.active{background:rgba(34,197,94,.15);color:#22c55e}
+                        .status-badge.inactive{background:rgba(239,68,68,.15);color:#ef4444}
+                        .rate-amount{font-size:1.25rem;font-weight:800;color:#fbbf24}
+                        .scan-row{flex-direction:column;align-items:flex-start;gap:.75rem}
+                        .scan-info{width:100%}
+                        .scan-primary{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem}
+                        .scan-time{font-size:.875rem;color:#a1a1aa}
+                        .scan-details{display:flex;gap:.5rem;flex-wrap:wrap;font-size:.875rem;color:#a1a1aa}
+                        .scan-earnings{font-size:1.25rem;font-weight:800;color:#fbbf24}
+                        .payroll-info{padding:2rem;text-align:center;color:#a1a1aa}
+                        .payroll-info p{margin:.5rem 0}
+                        .desktop-only{display:flex}
+                        .mobile-only{display:none}
+                        @media (max-width:768px){
+                            .desktop-only{display:none}
+                            .mobile-only{display:flex}
+                            .main-content{padding:1.5rem 1rem}
+                            .login-card{padding:2rem}
+                            .total-card h1{font-size:3rem}
+                            .breakdown-grid{grid-template-columns:1fr}
+                            .admin-nav{grid-template-columns:1fr}
+                            .scan-header{flex-direction:column;align-items:flex-start;gap:1rem}
+                            .weekly-total{width:100%}
+                            .search-box{width:100%}
+                            .search-box input{width:100%}
+                        }
+                        @keyframes spin{
+                            from{transform:rotate(0deg)}
+                            to{transform:rotate(360deg)}
+                        }
+                        .spinning{animation:spin 1s linear infinite}
+                    `}</style>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<PieceRateTracker />, document.getElementById('root'));
+    </script>
+</body>
+</html>
