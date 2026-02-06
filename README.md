@@ -5,6 +5,7 @@ A lightweight, offline-first web application for manufacturing teams to track pi
 ## 🎯 Features
 
 ### For Employees
+
 - **PIN-based authentication** - Simple employee_id + PIN login
 - **Barcode scanning** - Camera scanning with manual entry fallback
 - **Real-time earnings tracking** - See weekly earnings by operation
